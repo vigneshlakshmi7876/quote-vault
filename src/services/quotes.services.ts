@@ -6,7 +6,7 @@ const PAGE_SIZE = 10;
 
 export const fetchQuotes = async (
   page: number,
-  categories: string[] =[]
+  categories: string[] =[],
 ): Promise<{ data: Quote[] | null; error: any }> => {
   let query = supabase
     .from('quotes')

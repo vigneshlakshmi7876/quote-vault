@@ -10,4 +10,6 @@ export const ROUTES = {
   PROFILE: 'Profile',
   SETTINGS:'Settings',
   COLLECTION_DETAILS: 'CollectionDetails',
+  PROFILE_TAB:'ProfileTab',
+  DAILY_QUOTE:'DailyQuote',
 } as const;

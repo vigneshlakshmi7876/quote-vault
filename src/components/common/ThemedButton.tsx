@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, StyleProp, ViewStyle } from "react-native";
 import { useTheme } from "@/app/providers/ThemeProvider";
 
 interface Props {
@@ -6,18 +6,19 @@ interface Props {
   onPress: () => void;
   variant?: "primary" | "outline";
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-export const ThemedButton = ({ title, onPress, variant = "primary", loading }: Props) => {
+export const ThemedButton = ({ title, onPress, variant = "primary", loading, style }: Props) => {
   const { theme } = useTheme();
-  
+
   const isPrimary = variant === "primary";
   const bg = isPrimary ? theme.primary : "transparent";
   const text = isPrimary ? "#FFF" : theme.primary;
 
   return (
-    <TouchableOpacity 
-      style={[styles.btn, { backgroundColor: bg, borderColor: theme.primary, borderWidth: isPrimary ? 0 : 1 }]} 
+    <TouchableOpacity
+      style={[styles.btn, { backgroundColor: bg, borderColor: theme.primary, borderWidth: isPrimary ? 0 : 1 }, style]}
       onPress={onPress}
       disabled={loading}
     >

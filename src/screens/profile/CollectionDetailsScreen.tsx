@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { ThemedView } from '@/components/common/ThemedView';
 import { fetchCollectionDetails } from '@/services/collections.services';
 import QuoteGrid from '@/components/common/QuoteGrid';
+import { STRINGS } from '@/constants';
 
 export default function CollectionDetailsScreen({ route, navigation }: any) {
   const { id, name } = route.params; // Get params passed from navigation
@@ -32,7 +33,7 @@ export default function CollectionDetailsScreen({ route, navigation }: any) {
         // Reuse our new shared grid component!
         <QuoteGrid 
             data={quotes} 
-            emptyMessage="No quotes in this collection yet." 
+            emptyMessage={STRINGS.collections.noQuotesInCollection}
         />
       )}
     </ThemedView>

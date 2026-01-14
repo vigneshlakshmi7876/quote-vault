@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Dimensions, TouchableOpacity, Alert,View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native'; // Import Navigation Hook
+import { useNavigation } from '@react-navigation/native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { fetchUserCollections } from '@/services/collections.services';
@@ -31,22 +31,11 @@ export default function CollectionsGrid({ userId }: { userId: string }) {
     if (data) setCollections(data);
   };
 
-  // "New Collection" Card
-  const renderAddCard = () => (
-    <TouchableOpacity 
-        style={[styles.addCard, { borderColor: theme.primary, borderStyle: 'dashed', borderWidth: 2 }]}
-        onPress={() => Alert.alert("Tip", "Save a quote from the Home screen to create a new collection!")}
-    >
-        <Ionicons name="add" size={32} color={theme.primary} />
-        <ThemedText variant="caption" color={theme.primary} style={{ marginTop: 4 }}>New</ThemedText>
-    </TouchableOpacity>
-  );
-
   return (
     <ThemedView style={{padding:spacing.screenPadding}}>
 
       <FlatList
-        data={[{ id: 'ADD_NEW' }, ...collections]} // Prepend "New" button
+        data={collections} // Prepend "New" button
         keyExtractor={(item) => item.id}
         numColumns={3}
         
@@ -55,8 +44,7 @@ export default function CollectionsGrid({ userId }: { userId: string }) {
         contentContainerStyle={{ paddingBottom: 100 }}
         
         renderItem={({ item }) => {
-          if (item.id === 'ADD_NEW') return renderAddCard();
-  
+         
           return (
             <TouchableOpacity 
               style={[styles.card, { backgroundColor: theme.card }]}

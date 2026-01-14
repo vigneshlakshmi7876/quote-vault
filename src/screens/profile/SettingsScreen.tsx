@@ -6,6 +6,7 @@ import { ThemedView } from '@/components/common/ThemedView';
 import { ThemedText } from '@/components/common/ThemedText';
 import { spacing } from '@/theme/spacing';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { STRINGS } from '@/constants';
 
 export default function SettingsScreen() {
   const { isDark, setIsDark, theme } = useTheme();
@@ -18,7 +19,7 @@ export default function SettingsScreen() {
       <View style={[styles.row, { borderBottomColor: theme.text + '20' }]}>
         <View style={styles.labelContainer}>
             <Ionicons name="moon-outline" size={24} color={theme.text} style={{ marginRight: 12 }}/>
-            <ThemedText variant="body">Dark Mode</ThemedText>
+            <ThemedText variant="body">{STRINGS.settings.darkMode}</ThemedText>
         </View>
         <Switch
           value={isDark}
@@ -32,16 +33,17 @@ export default function SettingsScreen() {
       <View style={[styles.row, { borderBottomColor: theme.text + '20' }]}>
         <View style={styles.labelContainer}>
             <Ionicons name="notifications-outline" size={24} color={theme.text} style={{ marginRight: 12 }}/>
-            <ThemedText variant="body">Daily Quote Notification</ThemedText>
+            <ThemedText variant="body">{STRINGS.settings.dailyQuoteNotification}</ThemedText>
         </View>
         <Switch value={true} onValueChange={()=>{}} disabled />
       </View>
 
-      {/* Logout Button (Moved here as per standard app UX) */}
+      {/* Logout Button */}
       <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
-        <ThemedText variant="button" color="#FF4B4B">Logout</ThemedText>
+        <ThemedText variant="button" color={theme.primary}>{STRINGS.settings.logout}</ThemedText>
       </TouchableOpacity>
 
+     
     </ThemedView>
   );
 }

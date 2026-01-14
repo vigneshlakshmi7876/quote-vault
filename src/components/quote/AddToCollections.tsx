@@ -86,14 +86,18 @@ export default function AddToCollectionSheet({ visible, onClose, userId, quoteId
     }
   };
 
-  return (
+ return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ width: '100%' }}
-          >
+      {/* 1. Move KeyboardAvoidingView to the TOP level */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        {/* 2. Overlay handles the background tap */}
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.overlay}>
+            
+            {/* 3. Stop propagation so tapping the sheet doesn't close it */}
             <TouchableWithoutFeedback>
               <View style={[styles.sheet, { backgroundColor: theme.card }]}>
                 
@@ -176,9 +180,9 @@ export default function AddToCollectionSheet({ visible, onClose, userId, quoteId
                 )}
               </View>
             </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

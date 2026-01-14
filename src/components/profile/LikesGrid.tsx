@@ -81,6 +81,13 @@ export default function LikesGrid({ userId }: LikesGridProps) {
             >
               {item.text}
             </ThemedText>
+            <ThemedText 
+              variant="bodySmall"
+              align="center"
+              style={{ fontSize: 10, lineHeight: 18, opacity: 0.8 }}
+            >
+             {"-"} {item.author}
+            </ThemedText>
           </TouchableOpacity>
         )}
       />
@@ -136,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-    borderWidth: 0.5, // Thin line
+    borderWidth: 1, // Thin line
   },
   emptyContainer: {
     padding: 20,

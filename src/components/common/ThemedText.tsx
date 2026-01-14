@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { typography } from '@/theme/typography'; // Import your new file
+import { typography } from '@/theme/typography';
 
-// Define the allowed variants based on your typography keys
+// different type of text variants
 type TypographyVariant = 'h1' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'button' | 'caption';
 
 interface ThemedTextProps extends TextProps {

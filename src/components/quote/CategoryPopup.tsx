@@ -59,7 +59,7 @@ export default function CategoryPopup({ visible, onClose, selectedCategories, on
                 <ThemedText variant="h3">Filter Quotes</ThemedText>
                 {localSelection.length > 0 && (
                     <TouchableOpacity onPress={handleClear}>
-                        <ThemedText variant="caption" color={theme.primary}>Clear</ThemedText>
+                        <ThemedText variant="bodySmall" color={theme.primary}>Clear</ThemedText>
                     </TouchableOpacity>
                 )}
               </View>
@@ -81,8 +81,8 @@ export default function CategoryPopup({ visible, onClose, selectedCategories, on
                       onPress={() => toggleCategory(category.key)}
                     >
                       <ThemedText 
-                          variant="caption" 
-                          color={isSelected ? '#fff' : theme.primary} 
+                          variant="bodySmall" 
+                          color={isSelected ? theme.text : theme.primary} 
                           style={{ fontWeight: '600' }}
                       >
                         {category.label}
@@ -94,15 +94,15 @@ export default function CategoryPopup({ visible, onClose, selectedCategories, on
 
               {/* Action Buttons */}
               <View style={styles.footer}>
-                  <TouchableOpacity onPress={onClose} style={{ padding: 10 }}>
+                  <TouchableOpacity onPress={onClose} style={{ paddingHorizontal: 8 }}>
                       <ThemedText color={theme.text} style={{ opacity: 0.7 }}>Cancel</ThemedText>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={[styles.applyButton, { backgroundColor: theme.primary }]}
+                    style={[styles.applyButton]}
                     onPress={handleApply}
                   >
-                      <ThemedText color="#fff" style={{ fontWeight: 'bold' }}>
+                      <ThemedText color={theme.primary} style={{ fontWeight: 'bold' }}>
                           Apply Filters ({localSelection.length})
                       </ThemedText>
                   </TouchableOpacity>

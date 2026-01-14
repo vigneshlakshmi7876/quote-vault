@@ -1,13 +1,13 @@
 export const lightColors = {
   background: "#FFFFFF",
   text: "#111111",
-  primary: "#6366F1",
+  primary: "#f37b60",
   card: "#F3F4F6",
 };
 
 export const darkColors = {
-  background: "#0F172A",
+  background: "#0e0e0e",
   text: "#F8FAFC",
-  primary: "#818CF8",
-  card: "#1E293B",
+  primary: "#f37b60",
+  card: "#1a1a1a",
 };

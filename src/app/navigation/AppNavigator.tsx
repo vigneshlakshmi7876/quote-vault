@@ -1,29 +1,39 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons"; // Optional: for icons
-
-import HomeScreen from "../../screens/home/HomeScreen";
+import { Ionicons } from "@expo/vector-icons";
 import ProfileScreen from "../../screens/profile/ProfileScreen";
-import SettingsScreen from "../../screens/profile/SettingsScreen"; // Import your new screen
+import SettingsScreen from "../../screens/profile/SettingsScreen"; 
 import { ROUTES, STRINGS } from "@/constants";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import CollectionDetailsScreen from "@/screens/profile/CollectionDetailsScreen";
+import HomeFeedNavigator from "./HomeFeedNavigator";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// 1. Create a specific Stack for the Profile flow
+// 1. Profile Stack (Now uses Theme!)
 function ProfileStackNavigator() {
+  // Access the theme here
+  const { theme } = useTheme();
+
   return (
-    <Stack.Navigator>
-      {/* The main Profile Screen (Header hidden because you built a custom one) */}
+    <Stack.Navigator
+      screenOptions={{
+        // Dynamic Background Color (Dark in Dark Mode, White in Light Mode)
+        headerStyle: { 
+            backgroundColor: theme.card 
+        },
+        // Dynamic Text/Icon Color (White in Dark Mode, Black in Light Mode)
+        headerTintColor: theme.text,
+        headerShadowVisible: false, 
+      }}
+    >
       <Stack.Screen 
         name={ROUTES.PROFILE} 
         component={ProfileScreen} 
         options={{ headerShown: false }} 
       />
       
-      {/* The Settings Screen (Default Header shown so you get a 'Back' button) */}
       <Stack.Screen 
         name={ROUTES.SETTINGS} 
         component={SettingsScreen} 
@@ -35,7 +45,6 @@ function ProfileStackNavigator() {
         component={CollectionDetailsScreen}
         options={{ headerBackTitle: 'Back' }} 
       />
-
     </Stack.Navigator>
   );
 }
@@ -47,14 +56,13 @@ export default function AppNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false, // We handle headers inside the screens/stacks
+        headerShown: false, 
         tabBarStyle: {
             backgroundColor: theme.card,
             borderTopColor: theme.text + '10',
         },
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: 'gray',
-        // Simple Icon Logic (Optional but looks professional)
         tabBarIcon: ({ focused, color, size }) => {
             let iconName: any;
             if (route.name === ROUTES.HOME) iconName = focused ? 'home' : 'home-outline';
@@ -63,13 +71,12 @@ export default function AppNavigator() {
         }
       })}
     >
-      <Tab.Screen name={ROUTES.HOME} component={HomeScreen} />
+      <Tab.Screen name={ROUTES.HOME} component={HomeFeedNavigator} />
       
-      {/* Point the Profile Tab to your new Stack, NOT directly to the screen */}
       <Tab.Screen 
-        name="ProfileTab" // Internal name for navigation
+        name={ROUTES.PROFILE_TAB} 
         component={ProfileStackNavigator} 
-        options={{ tabBarLabel: STRINGS.profile.title }} // Label shown to user
+        options={{ tabBarLabel: STRINGS.profile.title }} 
       />
     </Tab.Navigator>
   );

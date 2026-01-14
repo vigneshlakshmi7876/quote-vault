@@ -70,3 +70,20 @@ export const fetchUserFavorites = async (userId: string) => {
 
   return { data: formattedData, error: null };
 };
+
+export const fetchLikedQuotes = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("quote_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    return { data: [], error };
+  }
+
+  // Return as array of quote IDs
+  return {
+    data: data.map((item) => item.quote_id),
+    error: null,
+  };
+};

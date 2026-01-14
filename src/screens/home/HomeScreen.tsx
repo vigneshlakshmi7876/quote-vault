@@ -1,26 +1,28 @@
 import {
-  View,
   FlatList,
   ActivityIndicator,
   Dimensions,
   StyleSheet,
   Alert,
+  Share,
 } from "react-native";
 import { useEffect, useState, useCallback } from "react";
-import { Ionicons } from "@expo/vector-icons";
+
 
 import { fetchQuotes } from "@/services/quotes.services";
+import { fetchLikedQuotes, toggleFavorite } from "@/services/favorites.services";
 import { Quote } from "@/domain";
 import { useAuth } from "@/app/providers/AuthProvider";
 
 import { ThemedView } from "@/components/common/ThemedView";
-import { ThemedText } from "@/components/common/ThemedText";
 import QuoteReelItem from "@/components/quote/QuoteReelItem";
 import CategoryPopup from "@/components/quote/CategoryPopup";
 import AddToCollectionSheet from "@/components/quote/AddToCollections";
 import DownloadModal from "@/components/quote/DownloadModal";
+import { STRINGS } from "@/constants";
 
 const { height } = Dimensions.get("window");
+
 
 const BACKGROUND_IMAGES = [
   "https://agmrjgtagvmermxlrqpv.supabase.co/storage/v1/object/public/quote-backdrops/v1/leafOnWater.jpg",
@@ -33,7 +35,9 @@ const BACKGROUND_IMAGES = [
 export default function HomeScreen() {
   const { session } = useAuth();
 
+
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [page, setPage] = useState(0);
 
   const [loading, setLoading] = useState(false);
@@ -43,6 +47,28 @@ export default function HomeScreen() {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [sheetQuoteId, setSheetQuoteId] = useState<string | null>(null);
   const [downloadQuote, setDownloadQuote] = useState<Quote | null>(null);
+
+  /* -------------------- FETCH LIKED MAP ONCE -------------------- */
+  useEffect(() => {
+    if (!session?.user) return;
+
+    fetchLikedQuotes(session.user.id)
+      .then(({ data, error }) => { 
+        if (error || !data) {
+          Alert.alert(STRINGS.errors.generalTitle,STRINGS.errors.favoriteUpdate);
+          return;
+        }
+
+        const map: Record<string, boolean> = {};
+        data.forEach((id) => (map[id] = true));
+
+        setLikedMap(map);
+      })
+      .catch((e) => {
+        Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.favoriteUpdate);
+      });
+  }, [session?.user]);
+
   /* -------------------- INITIAL LOAD / FILTER CHANGE -------------------- */
 
   useEffect(() => {
@@ -50,56 +76,67 @@ export default function HomeScreen() {
   }, [selectedFilters]);
 
   const loadInitialQuotes = async () => {
-    if (loading || refreshing) return;
+    try {
+      if (loading || refreshing) return;
 
-    setLoading(true);
-    setPage(0);
+      setLoading(true);
+      setPage(0);
 
-    const { data, error } = await fetchQuotes(0, selectedFilters);
+      const { data, error } = await fetchQuotes(0, selectedFilters);
+      if (data) {
+        setQuotes(data);
+        setPage(1);
+      }
 
-    if (!error && data) {
-      setQuotes(data);
-      setPage(1);
+      if (error) {
+        Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.failedToLoadQuotes);
+      }
+    } catch {
+      Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.failedToLoadQuotes);
+
+    } finally {
+
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  /* -------------------- PULL TO REFRESH -------------------- */
+  /* -------------------- REFRESH -------------------- */
 
   const handleRefresh = async () => {
-    if (refreshing || loading) return;
+    try {
+      if (refreshing || loading) return;
 
-    setRefreshing(true);
-    setPage(0);
+      setRefreshing(true);
+      setPage(0);
 
-    const { data, error } = await fetchQuotes(0, selectedFilters);
+      const { data, error } = await fetchQuotes(0, selectedFilters);
+      if (data) {
+        setQuotes(data);
+        setPage(1);
+      }
 
-    if (!error && data) {
-      setQuotes(data);
-      setPage(1);
+      if (error) {
+        Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.failedToLoadQuotes);
+      }
+    } catch (e) {
+      Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.failedToLoadQuotes);
     }
-
-    setRefreshing(false);
+    finally {
+      setRefreshing(false);
+    }
   };
 
-  /* -------------------- INFINITE SCROLL -------------------- */
+  /* -------------------- PAGINATION -------------------- */
 
   const loadMoreQuotes = async () => {
     if (loading || refreshing) return;
 
     setLoading(true);
+    const { data } = await fetchQuotes(page, selectedFilters);
 
-    const { data, error } = await fetchQuotes(page, selectedFilters);
-
-    if (!error && data && data.length > 0) {
-      setQuotes((prev) => {
-        const existingIds = new Set(prev.map((q) => q.id));
-        const newQuotes = data.filter((q) => !existingIds.has(q.id));
-        return [...prev, ...newQuotes];
-      });
-
-      setPage((prev) => prev + 1);
+    if (data?.length) {
+      setQuotes((prev) => [...prev, ...data]);
+      setPage((p) => p + 1);
     }
 
     setLoading(false);
@@ -107,36 +144,60 @@ export default function HomeScreen() {
 
   /* -------------------- ACTION HANDLERS -------------------- */
 
-  const handleSavePress = (quoteId: string) => {
-    if (!session?.user) {
-      Alert.alert("Login Required", "Please login to save quotes.");
-      return;
-    }
-    setSheetQuoteId(quoteId);
-  };
+  const handleToggleLike = useCallback(
+    async (quoteId: string) => {
+      if (!session?.user) {
+        Alert.alert(STRINGS.errors.loginRequired, STRINGS.errors.loginRequiredMessage);
+        return;
+      }
 
-  const handleLocalSave = (quote: Quote) => {
-    setDownloadQuote(quote);
-  };
+      setLikedMap((prev) => ({
+        ...prev,
+        [quoteId]: !prev[quoteId],
+      }));
 
-  /* -------------------- RENDER -------------------- */
+      const { error } = await toggleFavorite(session.user.id, quoteId);
+
+      if (error) {
+        setLikedMap((prev) => ({
+          ...prev,
+          [quoteId]: !prev[quoteId],
+        }));
+        Alert.alert(STRINGS.errors.generalTitle, STRINGS.errors.favoriteUpdate);
+      }
+    },
+    [session?.user]
+  );
+
+  const handleShare = useCallback(async (quote: Quote) => {
+    await Share.share({
+      message: `"${quote.text}"\n\n— ${quote.author}`,
+    });
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Quote }) => (
+      <QuoteReelItem
+        quote={item}
+        isLiked={!!likedMap[item.id]}
+        backgroundImages={BACKGROUND_IMAGES}
+        onToggleLike={handleToggleLike}
+        onShare={handleShare}
+        onCollectionPress={(id) => setSheetQuoteId(id)}
+        onLocalSavePress={setDownloadQuote}
+        onMorePress={() => setShowFilterPopup(true)}
+      />
+    ),
+    [likedMap, handleToggleLike, handleShare]
+  );
 
   return (
     <ThemedView style={styles.container}>
       <FlatList
         data={quotes}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <QuoteReelItem
-            quote={item}
-            backgroundImages={BACKGROUND_IMAGES}
-            onCollectionPress={handleSavePress}
-            onMorePress={() => setShowFilterPopup(true)}
-            onLocalSavePress={handleLocalSave}
-          />
-        )}
+        renderItem={renderItem}
         pagingEnabled
-        snapToAlignment="center"
         snapToInterval={height}
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
@@ -144,40 +205,24 @@ export default function HomeScreen() {
         onRefresh={handleRefresh}
         onEndReached={loadMoreQuotes}
         onEndReachedThreshold={0.7}
-        ListFooterComponent={
-          loading && !refreshing ? (
-            <ActivityIndicator size="large" />
-          ) : null
-        }
-        ListEmptyComponent={
-          !loading && !refreshing ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={64} color="#555" />
-              <ThemedText
-                variant="h3"
-                style={{ marginTop: 16, textAlign: "center" }}
-              >
-                No quotes found
-              </ThemedText>
-              <ThemedText
-                variant="body"
-                style={{ marginTop: 8, textAlign: "center", opacity: 0.6 }}
-              >
-                Try adjusting your filters
-              </ThemedText>
-            </View>
-          ) : null
-        }
+        initialNumToRender={1}
+        maxToRenderPerBatch={3}
+        windowSize={3}
+        removeClippedSubviews
+        getItemLayout={(_, index) => ({
+          length: height,
+          offset: height * index,
+          index,
+        })}
+        ListFooterComponent={loading ? <ActivityIndicator /> : null}
       />
 
-      {session && (
-        <AddToCollectionSheet
-          visible={!!sheetQuoteId}
-          onClose={() => setSheetQuoteId(null)}
-          userId={session.user.id}
-          quoteId={sheetQuoteId || ""}
-        />
-      )}
+      <AddToCollectionSheet
+        visible={!!sheetQuoteId}
+        onClose={() => setSheetQuoteId(null)}
+        userId={session?.user.id || ""}
+        quoteId={sheetQuoteId || ""}
+      />
 
       <CategoryPopup
         visible={showFilterPopup}
@@ -188,25 +233,16 @@ export default function HomeScreen() {
 
       {downloadQuote && (
         <DownloadModal
-          visible={!!downloadQuote}
+          visible
           onClose={() => setDownloadQuote(null)}
           quote={downloadQuote}
           backgroundImages={BACKGROUND_IMAGES}
         />
       )}
-      
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  emptyContainer: {
-    height,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
+  container: { flex: 1 },
 });

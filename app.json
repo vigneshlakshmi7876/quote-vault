@@ -26,6 +26,24 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-quick-actions",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "DailyQuote",
+              "label": "Daily Quote",
+              "minWidth": "160dp",
+              "minHeight": "120dp",
+              "description": "See your daily inspiration",
+              "previewImage": "./assets/widget-preview.png"
+            }
+          ]
+        }
+      ]
+    ]
   }
 }
