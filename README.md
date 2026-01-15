@@ -1,4 +1,3 @@
-
 # QuoteVault 📱
 
 QuoteVault is a modern, immersive mobile application for discovering, collecting, and sharing inspirational quotes.  
@@ -119,27 +118,6 @@ Many-to-many relationship between collections and quotes.
 
 ---
 
-## 🧠 Supabase RPC: Unique Daily Quote
-
-```sql
-create or replace function get_random_unique_quote(user_uuid uuid)
-returns setof quotes
-language sql
-as $$
-  select *
-  from quotes
-  where id not in (
-    select quote_id
-    from user_daily_quotes
-    where user_id = user_uuid
-  )
-  order by random()
-  limit 1;
-$$;
-```
-
----
-
 ## 🚀 Getting Started
 
 ## 🍎 iOS Testing Note
@@ -163,6 +141,114 @@ npm install
 
 ---
 
+## 🧰 Supabase Setup
+
+This project relies on Supabase for authentication, database storage, and server-side business logic.
+
+### 1. Create a Supabase Project
+- Visit https://supabase.com and create a new project
+- Note down your **Project URL** and **Anon (publishable) key**
+
+### 2. Enable Authentication
+- Go to **Authentication → Providers**
+- Enable **Email / Password** authentication
+
+### 3. Create Database Tables & Policies
+Open the **SQL Editor** in the Supabase dashboard and run the following scripts.
+
+```sql
+-- Quotes Table
+create table public.quotes (
+  id uuid default gen_random_uuid() primary key,
+  text text not null,
+  author text not null,
+  category text,
+  created_at timestamp with time zone default now()
+);
+
+-- User Daily Quotes Table
+create table public.user_daily_quotes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  quote_id uuid references public.quotes(id) on delete cascade not null,
+  date date default current_date not null,
+  created_at timestamp with time zone default now(),
+  constraint one_quote_per_day_per_user unique (user_id, date),
+  constraint no_repeat_quotes_for_user unique (user_id, quote_id)
+);
+
+-- Favorites Table
+create table public.favorites (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  quote_id uuid references public.quotes(id) on delete cascade,
+  created_at timestamp with time zone default now()
+);
+
+-- Collections Tables
+create table public.collections (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  name text not null,
+  created_at timestamp with time zone default now()
+);
+
+create table public.collection_quotes (
+  id uuid default gen_random_uuid() primary key,
+  collection_id uuid references public.collections(id) on delete cascade,
+  quote_id uuid references public.quotes(id) on delete cascade
+);
+```
+
+### 4. Enable Row Level Security and Policy (RLS)
+
+```sql
+create policy "Users can manage their favorites"
+on favorites for all
+using (auth.uid() = user_id);
+
+create policy "Users can manage their collections"
+on collections for all
+using (auth.uid() = user_id);
+
+alter table favorites enable row level security;
+alter table collections enable row level security;
+alter table collection_quotes enable row level security;
+alter table public.user_daily_quotes enable row level security;
+
+create policy "Users can view their own daily quotes"
+on public.user_daily_quotes
+for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own daily quotes"
+on public.user_daily_quotes
+for insert
+with check (auth.uid() = user_id);
+
+-- Create the "Magic" RPC Function for Unique Daily Quotes
+create or replace function get_random_unique_quote(user_uuid uuid)
+returns setof quotes
+language sql
+as $$
+  select *
+  from quotes
+  where id not in (
+    select quote_id
+    from user_daily_quotes
+    where user_id = user_uuid
+  )
+  order by random()
+  limit 1;
+$$;
+
+```
+
+### 5. Seed Quotes Data
+Populate the `quotes` table with sample data (recommended: 100+ quotes across categories).
+
+---
+
 ## 🔐 Environment Variables
 
 This project uses environment variables for Supabase configuration.
@@ -170,16 +256,20 @@ This project uses environment variables for Supabase configuration.
 An example file is already provided in the repository.
 
 1. Create a local environment file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Fill in your Supabase project details in the `.env` file:
-   
-    EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
-    EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key  
+```bash
+cp .env.example .env
+```
 
-    ℹ️ Note: Supabase a non (publishable) keys are safe to use in client applications.
-    The .env file is excluded from version control and should not be committed.
+2. Ensure the following values are present in `.env`:
+
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+EXPO_PUBLIC_SUPABASE_KEY=your_anon_publishable_key
+```
+
+ℹ️ Supabase **anon (publishable) keys** are safe to use in client applications.  
+The `.env` file is ignored by version control and should not be committed.
+
 ---
 
 ## 🧩 Expo Prebuild & Native Features (Important)
