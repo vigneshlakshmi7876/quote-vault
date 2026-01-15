@@ -1,4 +1,4 @@
-import { Quote, QuoteCategory } from '@/domain';
+import { Quote } from '@/domain';
 import { supabase } from '@/lib/supabase';
 
 const PAGE_SIZE = 10;
